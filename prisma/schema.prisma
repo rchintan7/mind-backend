@@ -1,0 +1,683 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+// **************
+// User
+// **************
+
+model user {
+  id                     String      @id @default(cuid())
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  email                  String      @unique
+  emailVerified          Boolean     @default(false)
+  password               String
+  phoneNumber            String?
+  firstname              String?
+  lastname               String?
+  loginMethod            loginMethod
+  appleToken             String?
+  googleToken            String?
+  facebookToken          String?
+  profilePicture         String?
+  experiencePoints       Int         @default(0)
+  userLevel              Int         @default(0)
+  lastLogin              DateTime?
+  currentMood            userMood
+  isNotificationsAllowed Boolean     @default(true)
+  isAnalysisAllowed      Boolean     @default(true)
+  socialBattery          Int?        @default(50)
+  gender                 gender?
+  contactNumber          String?
+  likedContents          String[]
+  lastSeenContent        String?     @default("")
+
+  videoCount        Int       @default(0) // Tracks the streak count
+  tasksCompleted    Int       @default(0) // Tracks the streak count
+  quizzesCompleted  Int       @default(0) // Tracks the streak count
+  streakCount       Int       @default(0) // Tracks the streak count
+  appOpenCount      Int       @default(0) // Tracks the app open count
+  streakUpdatedTime DateTime? // Tracks the last time streak was updated
+
+  subscriptionStatus       subscriptionStatus @default(INACTIVE)
+  subscriptionType         subscriptionType   @default(MONTHLY)
+  subscriptionPurchaseDate DateTime?          @default(now())
+
+  userRole     role
+  archivements userArchivement[]
+  categories   userCategory[]
+  contents     content[] // Content the User as Editor or Admin has created
+  moods        moods[]
+  diaries      diaries[]
+  goals        goals[]
+
+  @@index([email, userLevel]) // Index on email and user level for faster lookups
+}
+
+model quizData {
+  id    String @id @default(cuid())
+  email String @unique
+  quiz  Json?
+}
+
+// **************
+// Archivements
+// **************
+
+// model archivement {
+//   id                     String   @id @default(cuid())
+//   createdAt              DateTime @default(now())
+//   updatedAt              DateTime @updatedAt
+//   title                  String
+//   description            String
+//   imageURL               String?
+//   neededExperiencePoints Int
+
+//   users                          userArchivement[]
+//   archivementCategoryRequirement archivementCategoryRequirement[] // needed category level to unlock
+
+//   @@index([neededExperiencePoints]) // Index for faster queries based on experience
+// }
+
+// schema.prisma
+
+model archivement {
+  id               String   @id @default(uuid())
+  title            String
+  description      String?
+  xpToEarn         Int?
+  isRepeatable     Boolean?
+  xpRequired       Int?
+  pointsRequired   Int?
+  videosSeen       Int?
+  tasksDone        Int?
+  quizzesDone      Int?
+  affirmationsDone Int?
+  moodTracked      Int?
+  moodTypeTracked  Json?
+  loginStreak      Int?
+  imageURL         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users                          userArchivement[]
+  archivementCategoryRequirement archivementCategoryRequirement[] // needed category level to unlock
+}
+
+model userArchivement {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          user        @relation(fields: [userId], references: [id])
+  userId        String
+  archivement   archivement @relation(fields: [archivementId], references: [id])
+  archivementId String
+  progress      Int         @default(0)
+  completedAt   DateTime?
+
+  @@index([userId, archivementId]) // Index for better performance in relational queries
+}
+
+// **************
+// Categories
+// **************
+
+model categories {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+
+  baseCategory baseCategory
+
+  tags           String[] // Denormalizing: store tags directly as an array of strings
+  parameters     categoryParameter[]
+  categoryPoints Int?
+  level          Int?                @default(0)
+
+  users                          userCategory[]
+  content                        content[]
+  taskCategoryRequirement        taskCategoryRequirement[]
+  archivementCategoryRequirement archivementCategoryRequirement[]
+  levels                         categoryLevel[]
+  categoryParameterToEarn        categoryParameterToEarn[]
+
+  @@index([title]) // Index on title for faster search
+}
+
+model categoryLevel {
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  category   categories @relation(fields: [categoryId], references: [id])
+  categoryId String
+  level      Int
+  minXP      Int
+  maxXP      Int
+
+  @@index([categoryId, level]) // Index for faster lookups by category and level
+}
+
+model userCategory {
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  user       user       @relation(fields: [userId], references: [id])
+  userId     String
+  category   categories @relation(fields: [categoryId], references: [id])
+  categoryId String
+  level      Int        @default(0)
+  earnedXP   Int        @default(0)
+
+  @@index([userId, categoryId]) // Composite index for user and category lookups
+}
+
+model categoryParameter {
+  id           String     @id @default(cuid())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  category     categories @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  title        String
+  type         String
+  defaultValue String
+  minValue     Int
+  maxValue     Int
+  step         Int
+
+  @@index([categoryId]) // Index for category parameter lookups
+}
+
+model categoryParameterToEarn {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  category    categories @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  valueToEarn Int
+  taskFlow    taskFlow[]
+
+  @@index([categoryId]) // Index for category parameter lookups
+}
+
+// **************
+// Content
+// **************
+
+model content {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdBy   user         @relation(fields: [createdById], references: [id])
+  createdById String
+  title       String
+  description String
+  imageURL    String?
+  videoURL    String?
+  audioURL    String?
+  type        contentTypes
+
+  userExperiencePointsMin Int?
+  userExperiencePointsMax Int?
+  likes                   Int? @default(0)
+
+  categoryRequirements taskCategoryRequirement[]
+
+  tags       String[] // Denormalizing: store tags directly as an array of strings
+  categories categories[]
+
+  @@index([title]) // Index on content title for faster search
+}
+
+// **************
+// Task
+// **************
+
+model task {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskType taskType
+
+  title       String
+  description String
+  imageURL    String?
+  videoURL    String?
+  audioURL    String?
+  text        String?
+  type        contentTypes
+
+  tagsToEarn   String[]
+  affirmations String[]
+
+  matchingParameters Json?
+
+  confirmationType   String?
+  confirmationAmount Int?
+
+  taskFlow taskFlow[]
+  answers  answer[]
+}
+
+model answer {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answerText String
+
+  imageURL String?
+
+  matchingParameters Json?
+
+  tagsToEarn         String[]
+  affirmationsToEarn String[]
+
+  nextTaskId     String?
+  nextTaskFlowId String?
+
+  task task[]
+}
+
+// **************
+// Task Category Requirement
+// **************
+
+model taskCategoryRequirement {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskId     String?
+  category   categories @relation(fields: [categoryId], references: [id])
+  categoryId String
+  minLevel   Int
+  maxLevel   Int
+
+  taskFlow taskFlow[]
+  content  content[]
+
+  @@index([categoryId, minLevel, maxLevel]) // Composite index for filtering by category and level range
+}
+
+model archivementCategoryRequirement {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  archivement   archivement @relation(fields: [archivementId], references: [id])
+  archivementId String
+  category      categories  @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  minLevel      Int
+
+  @@index([categoryId, minLevel]) // Composite index for filtering by category and level
+}
+
+// **************
+// Task-Flow
+// **************
+
+model taskFlow {
+  id           String       @id @default(cuid())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  taskFlowType taskFlowType
+  title        String
+  description  String?
+  imageURL     String?
+  videoURL     String?
+  audioURL     String?
+
+  tasks                   task[]
+  userExperiencePointsMin Int
+  userExperiencePointsMax Int
+  categoryRequirements    taskCategoryRequirement[]
+
+  userExperiencePointsToEarn Int
+  categoryParametersToEarn   categoryParameterToEarn[]
+
+  requiredTimeForTaskFlow String?
+
+  matchingParameters Json?
+  results            Json?
+
+  requiredTags String[]
+  tagsToEarn   String[]
+
+  @@index([taskFlowType, title]) // Index for task flow type and title for faster lookups
+}
+
+// **************
+// Tags
+// To dynamically edit selectable tags
+// **************
+
+model tags {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  title              String
+  action             action[]
+  description        String?
+  socialBatteryValue Int?
+}
+
+// **************
+// Business Rules
+// **************
+
+model businessRule {
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  title      String
+  conditions condition[] // List of conditions (IF)
+  actions    action[] // List of actions (THEN)
+}
+
+// Condition: Represents each IF condition in the rule
+model condition {
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  field     conditionField
+  operator  conditionOperator
+  value     String
+
+  moodInRow      Int?
+  activityValues String[]
+  categoryId     String?
+
+  businessRule   businessRule @relation(fields: [businessRuleId], references: [id])
+  businessRuleId String
+}
+
+// Action: Represents each THEN action in the rule
+model action {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  type           actionType
+  value          String
+  chatMessage    String?
+  tag            tags?        @relation(fields: [tagsId], references: [id])
+  businessRule   businessRule @relation(fields: [businessRuleId], references: [id])
+  businessRuleId String
+  tagsId         String?
+}
+
+model notification {
+  id                    String   @id @default(cuid())
+  type                  String
+  title                 String
+  description           String?
+  messageAfterWakeUp    String?
+  messageBeforeBedTime  String?
+  daysInRow             Int?
+  achievementMessage    String?
+  missedLoginMessage    String?
+  xpThreshold           Int?
+  xpNotificationMessage String?
+  midWeekReminder       String?
+  lastDayReminder       String?
+  notificationTime      String?
+  notificationFrequency String?
+  dateOfMonth           String?
+  dayOfWeek             String?
+  time                  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model moods {
+  id        Int      @id @default(autoincrement())
+  mood      userMood
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model goals {
+  id             Int       @id @default(autoincrement())
+  goal           String
+  goalType       goalType
+  goalCount      Int
+  completedCount Int
+  user           user      @relation(fields: [userId], references: [id])
+  userId         String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  status         String    @default("active") // "active" or "expired"
+  lastUpdated    DateTime? @default(now())
+}
+
+model diaries {
+  id        String   @id @default(cuid())
+  user      user     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chat chat[]
+}
+
+model diaryQuestions {
+  id        String     @id @default(cuid())
+  question  String     @default("")
+  type      diaryTypes @default(GRATITUDE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model chat {
+  id            String        @id @default(cuid())
+  message       String
+  from          messageSentBy
+  messageType   messageType
+  answerType    answerType
+  selctionType  selctionType
+  answerOptions String[]
+  isAnswered    Boolean       @default(false)
+  diary         diaries       @relation(fields: [diaryId], references: [id])
+  diaryId       String
+  questionType  diaryTypes    @default(OTHERS)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model taskHistory {
+  id           String       @id @default(cuid())
+  userId       String?
+  taskId       String?
+  taskflowId   String?
+  categoryId   String?
+  baseCategory baseCategory
+  userLevel    Int?         @default(0)
+  isCompleted  Boolean?     @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([userId, taskId])
+}
+
+model levelRange {
+  id        String   @id @default(cuid())
+  userLevel Int      @default(0)
+  minXP     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model userAffirmation {
+  id          String   @id @default(cuid())
+  userId      String
+  affirmation String
+  isChecked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model feedback {
+  id          String   @id @default(cuid())
+  userId      String
+  phoneNumber String
+  text        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// **************
+// Enums Definition
+// **************
+
+enum role {
+  ADMIN
+  EDITOR
+  FREE_USER
+  PAID_USER
+}
+
+enum loginMethod {
+  EMAIL
+  APPLE
+  GOOGLE
+  FACEBOOK
+}
+
+enum userMood {
+  BAD
+  OK
+  NORMAL
+  GOOD
+  SUPER
+}
+
+enum subscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+enum subscriptionType {
+  MONTHLY
+  YEARLY
+}
+
+enum contentTypes {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum taskType {
+  SINGLE_CHOICE_QUESTION
+  MULTIPLE_CHOICE_QUESTION
+  FREE_TEXT_QUESTION
+  INTERMEDIATE_SCREEN
+  CHALLENGE
+  CONFIRMATION
+  ARTICLE
+  VIDEO
+  AUDIO
+  IMAGE
+  TEXT
+}
+
+enum taskFlowType {
+  TRAINING
+  QUIZ
+  SINGLE_TASK
+}
+
+enum conditionField {
+  MOOD
+  XP
+  CATEGORY_LEVEL
+  NO_LOGIN
+  STREAK
+  SOCIAL_BATTERY
+  MOOD_SWINGS
+  MOOD_EVERAGE_OF_DAY
+  DIARY_ENTRIES_CONTAINS_WORD
+  ACTIVITY
+}
+
+enum conditionOperator {
+  IS
+  GREATER_THAN
+  LESS_THAN
+}
+
+enum actionType {
+  SEND_MESSAGE
+  SEND_PUSH_NOTIFICATION
+  SHOW_CONTENT
+  TASKFLOW
+  TASKFLOW_BY_CATEGORY
+}
+
+enum baseCategory {
+  JOY_OF_LIFE
+  PERSONAL_GROWTH
+  EMOTIONAL_STRENGTH
+  RELATIONSHIPS
+}
+
+enum messageSentBy {
+  APP
+  USER
+}
+
+enum messageType {
+  TEXT
+  ARRAY
+  TASK
+}
+
+enum answerType {
+  MOOD
+  ACTIVITY
+  CONFIRM
+  TEXT
+  TASK_CONFIRM
+}
+
+enum selctionType {
+  MULTIPLE
+  SINGLE
+}
+
+enum gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum goalType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum diaryTypes {
+  GRATITUDE
+  SELFCARE
+  SUCCESS
+  CHALLENGES
+  OTHERS
+}

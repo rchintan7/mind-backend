@@ -1,0 +1,627 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table user {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  email String [unique, not null]
+  emailVerified Boolean [not null, default: false]
+  password String [not null]
+  phoneNumber String
+  firstname String
+  lastname String
+  loginMethod loginMethod [not null]
+  appleToken String
+  googleToken String
+  facebookToken String
+  profilePicture String
+  experiencePoints Int [not null, default: 0]
+  userLevel Int [not null, default: 0]
+  lastLogin DateTime
+  currentMood userMood [not null]
+  isNotificationsAllowed Boolean [not null, default: true]
+  isAnalysisAllowed Boolean [not null, default: true]
+  socialBattery Int [default: 50]
+  gender gender
+  contactNumber String
+  likedContents String[] [not null]
+  lastSeenContent String [default: '']
+  videoCount Int [not null, default: 0]
+  tasksCompleted Int [not null, default: 0]
+  quizzesCompleted Int [not null, default: 0]
+  streakCount Int [not null, default: 0]
+  appOpenCount Int [not null, default: 0]
+  streakUpdatedTime DateTime
+  subscriptionStatus subscriptionStatus [not null, default: 'INACTIVE']
+  subscriptionType subscriptionType [not null, default: 'MONTHLY']
+  subscriptionPurchaseDate DateTime [default: `now()`]
+  userRole role [not null]
+  archivements userArchivement [not null]
+  categories userCategory [not null]
+  contents content [not null]
+  moods moods [not null]
+  diaries diaries [not null]
+  goals goals [not null]
+}
+
+Table quizData {
+  id String [pk]
+  email String [unique, not null]
+  quiz Json
+}
+
+Table archivement {
+  id String [pk]
+  title String [not null]
+  description String
+  xpToEarn Int
+  isRepeatable Boolean
+  xpRequired Int
+  pointsRequired Int
+  videosSeen Int
+  tasksDone Int
+  quizzesDone Int
+  affirmationsDone Int
+  moodTracked Int
+  moodTypeTracked Json
+  loginStreak Int
+  imageURL String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  users userArchivement [not null]
+  archivementCategoryRequirement archivementCategoryRequirement [not null]
+}
+
+Table userArchivement {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user user [not null]
+  userId String [not null]
+  archivement archivement [not null]
+  archivementId String [not null]
+  progress Int [not null, default: 0]
+  completedAt DateTime
+}
+
+Table categories {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  description String
+  baseCategory baseCategory [not null]
+  tags String[] [not null]
+  parameters categoryParameter [not null]
+  categoryPoints Int
+  level Int [default: 0]
+  users userCategory [not null]
+  content content [not null]
+  taskCategoryRequirement taskCategoryRequirement [not null]
+  archivementCategoryRequirement archivementCategoryRequirement [not null]
+  levels categoryLevel [not null]
+  categoryParameterToEarn categoryParameterToEarn [not null]
+}
+
+Table categoryLevel {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  category categories [not null]
+  categoryId String [not null]
+  level Int [not null]
+  minXP Int [not null]
+  maxXP Int [not null]
+}
+
+Table userCategory {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user user [not null]
+  userId String [not null]
+  category categories [not null]
+  categoryId String [not null]
+  level Int [not null, default: 0]
+  earnedXP Int [not null, default: 0]
+}
+
+Table categoryParameter {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  category categories [not null]
+  categoryId String [not null]
+  title String [not null]
+  type String [not null]
+  defaultValue String [not null]
+  minValue Int [not null]
+  maxValue Int [not null]
+  step Int [not null]
+}
+
+Table categoryParameterToEarn {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  category categories [not null]
+  categoryId String [not null]
+  valueToEarn Int [not null]
+  taskFlow taskFlow [not null]
+}
+
+Table content {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  createdBy user [not null]
+  createdById String [not null]
+  title String [not null]
+  description String [not null]
+  imageURL String
+  videoURL String
+  audioURL String
+  type contentTypes [not null]
+  userExperiencePointsMin Int
+  userExperiencePointsMax Int
+  likes Int [default: 0]
+  categoryRequirements taskCategoryRequirement [not null]
+  tags String[] [not null]
+  categories categories [not null]
+}
+
+Table task {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  taskType taskType [not null]
+  title String [not null]
+  description String [not null]
+  imageURL String
+  videoURL String
+  audioURL String
+  text String
+  type contentTypes [not null]
+  tagsToEarn String[] [not null]
+  affirmations String[] [not null]
+  matchingParameters Json
+  confirmationType String
+  confirmationAmount Int
+  taskFlow taskFlow [not null]
+  answers answer [not null]
+}
+
+Table answer {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  answerText String [not null]
+  imageURL String
+  matchingParameters Json
+  tagsToEarn String[] [not null]
+  affirmationsToEarn String[] [not null]
+  nextTaskId String
+  nextTaskFlowId String
+  task task [not null]
+}
+
+Table taskCategoryRequirement {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  taskId String
+  category categories [not null]
+  categoryId String [not null]
+  minLevel Int [not null]
+  maxLevel Int [not null]
+  taskFlow taskFlow [not null]
+  content content [not null]
+}
+
+Table archivementCategoryRequirement {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  archivement archivement [not null]
+  archivementId String [not null]
+  category categories [not null]
+  categoryId String [not null]
+  minLevel Int [not null]
+}
+
+Table taskFlow {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  taskFlowType taskFlowType [not null]
+  title String [not null]
+  description String
+  imageURL String
+  videoURL String
+  audioURL String
+  tasks task [not null]
+  userExperiencePointsMin Int [not null]
+  userExperiencePointsMax Int [not null]
+  categoryRequirements taskCategoryRequirement [not null]
+  userExperiencePointsToEarn Int [not null]
+  categoryParametersToEarn categoryParameterToEarn [not null]
+  requiredTimeForTaskFlow String
+  matchingParameters Json
+  results Json
+  requiredTags String[] [not null]
+  tagsToEarn String[] [not null]
+}
+
+Table tags {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  action action [not null]
+  description String
+  socialBatteryValue Int
+}
+
+Table businessRule {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  conditions condition [not null]
+  actions action [not null]
+}
+
+Table condition {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  field conditionField [not null]
+  operator conditionOperator [not null]
+  value String [not null]
+  moodInRow Int
+  activityValues String[] [not null]
+  categoryId String
+  businessRule businessRule [not null]
+  businessRuleId String [not null]
+}
+
+Table action {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  type actionType [not null]
+  value String [not null]
+  chatMessage String
+  tag tags
+  businessRule businessRule [not null]
+  businessRuleId String [not null]
+  tagsId String
+}
+
+Table notification {
+  id String [pk]
+  type String [not null]
+  title String [not null]
+  description String
+  messageAfterWakeUp String
+  messageBeforeBedTime String
+  daysInRow Int
+  achievementMessage String
+  missedLoginMessage String
+  xpThreshold Int
+  xpNotificationMessage String
+  midWeekReminder String
+  lastDayReminder String
+  notificationTime String
+  notificationFrequency String
+  dateOfMonth String
+  dayOfWeek String
+  time String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table moods {
+  id Int [pk, increment]
+  mood userMood [not null]
+  user user [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table goals {
+  id Int [pk, increment]
+  goal String [not null]
+  goalType goalType [not null]
+  goalCount Int [not null]
+  completedCount Int [not null]
+  user user [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  status String [not null, default: 'active']
+  lastUpdated DateTime [default: `now()`]
+}
+
+Table diaries {
+  id String [pk]
+  user user [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  chat chat [not null]
+}
+
+Table diaryQuestions {
+  id String [pk]
+  question String [not null, default: '']
+  type diaryTypes [not null, default: 'GRATITUDE']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table chat {
+  id String [pk]
+  message String [not null]
+  from messageSentBy [not null]
+  messageType messageType [not null]
+  answerType answerType [not null]
+  selctionType selctionType [not null]
+  answerOptions String[] [not null]
+  isAnswered Boolean [not null, default: false]
+  diary diaries [not null]
+  diaryId String [not null]
+  questionType diaryTypes [not null, default: 'OTHERS']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table taskHistory {
+  id String [pk]
+  userId String
+  taskId String
+  taskflowId String
+  categoryId String
+  baseCategory baseCategory [not null]
+  userLevel Int [default: 0]
+  isCompleted Boolean [default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, taskId) [unique]
+  }
+}
+
+Table levelRange {
+  id String [pk]
+  userLevel Int [not null, default: 0]
+  minXP Int [not null, default: 0]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table userAffirmation {
+  id String [pk]
+  userId String [not null]
+  affirmation String [not null]
+  isChecked Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table feedback {
+  id String [pk]
+  userId String [not null]
+  phoneNumber String [not null]
+  text String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table categoriesTocontent {
+  contentId String [ref: > content.id]
+  categoriesId String [ref: > categories.id]
+}
+
+Table categoryParameterToEarnTotaskFlow {
+  taskflowId String [ref: > taskFlow.id]
+  categoryparameterstoearnId String [ref: > categoryParameterToEarn.id]
+}
+
+Table contentTotaskCategoryRequirement {
+  categoryrequirementsId String [ref: > taskCategoryRequirement.id]
+  contentId String [ref: > content.id]
+}
+
+Table taskTotaskFlow {
+  taskflowId String [ref: > taskFlow.id]
+  tasksId String [ref: > task.id]
+}
+
+Table answerTotask {
+  answersId String [ref: > answer.id]
+  taskId String [ref: > task.id]
+}
+
+Table taskCategoryRequirementTotaskFlow {
+  taskflowId String [ref: > taskFlow.id]
+  categoryrequirementsId String [ref: > taskCategoryRequirement.id]
+}
+
+Enum role {
+  ADMIN
+  EDITOR
+  FREE_USER
+  PAID_USER
+}
+
+Enum loginMethod {
+  EMAIL
+  APPLE
+  GOOGLE
+  FACEBOOK
+}
+
+Enum userMood {
+  BAD
+  OK
+  NORMAL
+  GOOD
+  SUPER
+}
+
+Enum subscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+Enum subscriptionType {
+  MONTHLY
+  YEARLY
+}
+
+Enum contentTypes {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+Enum taskType {
+  SINGLE_CHOICE_QUESTION
+  MULTIPLE_CHOICE_QUESTION
+  FREE_TEXT_QUESTION
+  INTERMEDIATE_SCREEN
+  CHALLENGE
+  CONFIRMATION
+  ARTICLE
+  VIDEO
+  AUDIO
+  IMAGE
+  TEXT
+}
+
+Enum taskFlowType {
+  TRAINING
+  QUIZ
+  SINGLE_TASK
+}
+
+Enum conditionField {
+  MOOD
+  XP
+  CATEGORY_LEVEL
+  NO_LOGIN
+  STREAK
+  SOCIAL_BATTERY
+  MOOD_SWINGS
+  MOOD_EVERAGE_OF_DAY
+  DIARY_ENTRIES_CONTAINS_WORD
+  ACTIVITY
+}
+
+Enum conditionOperator {
+  IS
+  GREATER_THAN
+  LESS_THAN
+}
+
+Enum actionType {
+  SEND_MESSAGE
+  SEND_PUSH_NOTIFICATION
+  SHOW_CONTENT
+  TASKFLOW
+  TASKFLOW_BY_CATEGORY
+}
+
+Enum baseCategory {
+  JOY_OF_LIFE
+  PERSONAL_GROWTH
+  EMOTIONAL_STRENGTH
+  RELATIONSHIPS
+}
+
+Enum messageSentBy {
+  APP
+  USER
+}
+
+Enum messageType {
+  TEXT
+  ARRAY
+  TASK
+}
+
+Enum answerType {
+  MOOD
+  ACTIVITY
+  CONFIRM
+  TEXT
+  TASK_CONFIRM
+}
+
+Enum selctionType {
+  MULTIPLE
+  SINGLE
+}
+
+Enum gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+Enum goalType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+Enum diaryTypes {
+  GRATITUDE
+  SELFCARE
+  SUCCESS
+  CHALLENGES
+  OTHERS
+}
+
+Ref: userArchivement.userId > user.id
+
+Ref: userArchivement.archivementId > archivement.id
+
+Ref: categoryLevel.categoryId > categories.id
+
+Ref: userCategory.userId > user.id
+
+Ref: userCategory.categoryId > categories.id
+
+Ref: categoryParameter.categoryId > categories.id
+
+Ref: categoryParameterToEarn.categoryId > categories.id
+
+Ref: content.createdById > user.id
+
+Ref: taskCategoryRequirement.categoryId > categories.id
+
+Ref: archivementCategoryRequirement.archivementId > archivement.id
+
+Ref: archivementCategoryRequirement.categoryId > categories.id
+
+Ref: condition.businessRuleId > businessRule.id
+
+Ref: action.tagsId > tags.id
+
+Ref: action.businessRuleId > businessRule.id
+
+Ref: moods.userId > user.id
+
+Ref: goals.userId > user.id
+
+Ref: diaries.userId > user.id
+
+Ref: chat.diaryId > diaries.id
